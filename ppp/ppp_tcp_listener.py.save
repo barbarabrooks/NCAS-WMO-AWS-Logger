@@ -1,0 +1,67 @@
+# Copyright (c) Twisted Matrix Laboratories.
+# See LICENSE for details.
+
+import os
+
+from twisted.internet import reactor, protocol
+from twisted.python import log
+from datetime import datetime
+
+
+class pppTCPListener(protocol.Protocol):
+    """This is a very basic TCP listener for the Pressure sensor"""
+
+    outpath = "DATA/PPP"
+    __buffer = ''
+
+    def dataReceived(self, data):
+        '''reconstitutes a possibly-fragmented incoming TCP record'''
+        if len(data) == 9:
+           self.__buffer = data
+           log.msg(repr(self.__buffer))
+           self.writedata(self.__buffer)
+           self.__buffer = ''
+           self.transport.loseConnection()
+
+    def writedata(self,data):
+        dt = datetime.utcnow()
+        today = dt.strftime('%Y-%m-%d')
+        try:
+           self.factory.outfiles[today].write(dt.isoformat() +',' + data)
+           self.factory.outfiles[today].flush()
+        except KeyError: # i.e.file does not exist yet
+            try:
+                os.umask(022)
+                outfile = os.path.join(self.outpath,dt.strftime('%Y%m%d_ppp.csv'))
+                log.msg('Creating datafile ' + outfile)
+                self.factory.outfiles[today] = open(outfile, 'a')
+                self.factory.outfiles[today].write(dt.isoformat() +',' + data)
+                self.factory.outfiles[today].flush()
+            except TypeError:
+                log.msg('Invalid TCP data, discarding')
+
+class pppINIT(protocol.Protocol):
+
+
+
+def main():
+    #initalise the pressure sensor
+    print('Initalising PPP')
+    msg1 = '\r\n' 
+    msg2 = '.BP\r\n'
+    transport.write(msg1.encde())
+    print('msg 1')
+    transport.write(msg2.encde())
+    prnt ('msg2')
+
+    """This runs the protocol on port 4002"""
+    factory = protocol.ServerFactory()
+    #factory.protocol = Echo
+    reactor.listenTCP(4002,factory)
+    reactor.run()
+
+# this only runs if the module was *not* imported
+if __name__ == '__main__':
+    main()
+
+

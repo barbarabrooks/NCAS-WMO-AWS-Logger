@@ -1,0 +1,26 @@
+# vim: et ts=4
+#
+
+[Service]
+# Should cause failure if file doesn't exist (i.e. /data drive is not mounted)
+ConditionPathExists=/media/pi/VERBATIM/mounted
+
+# Restart on failure. Keep trying to restart.
+RestartSec=1m
+Restart=always
+
+ExecStart=twistd \
+    --nodaemon \
+    --pidfile=/var/run/rht-twistd.pid \
+    --rundir=/home/pi/CODE/TCPIP \
+    --umask=022 \
+    --logfile=/var/log/twistd/rht-tcp-listener.log \
+    --python=/home/pi/CODE/TCPIP/rht-tcp-listener.tac
+
+WorkingDirectory=/opt/scripts
+
+User=root
+Group=nogroup
+
+[Install]
+WantedBy=multi-user.target
